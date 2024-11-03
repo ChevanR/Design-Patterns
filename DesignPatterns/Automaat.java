@@ -1,0 +1,2 @@
+class Automaat extends Versnellingsbak {
+}

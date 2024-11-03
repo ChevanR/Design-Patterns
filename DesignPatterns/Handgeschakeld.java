@@ -1,0 +1,2 @@
+class Handgeschakeld extends Versnellingsbak {
+}

@@ -1,0 +1,170 @@
+import java.util.Scanner;
+import java.util.InputMismatchException;
+
+
+
+
+
+
+
+
+
+
+
+
+// Main klasse waarin het proces start
+public class Main {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // Step 1: Ask for the type of vehicle (Auto or Bestelbus)
+        int voertuigType = promptForValidInput(scanner,
+                "Welkom bij Chemine Industries!\nKies een type voertuig:\n1. Auto\n2. Bestelbus", 1, 2);
+
+        // Step 2: Associate the vehicle type with the correct factory
+        Fabriek fabriek;
+        String vehicleHandOffMessage;
+        if (voertuigType == 1) {
+            fabriek = new AutoFabriek();
+            vehicleHandOffMessage = "Auto gaat naar de detailhandelaar.";
+        } else {
+            fabriek = new BestelbusFabriek();
+            vehicleHandOffMessage = "Bestelbus gaat naar de detailhandelaar.";
+        }
+
+        // Step 3: Initialize the dealer with the chosen factory
+        Dealer dealer = new Dealer(fabriek);
+
+        System.out.println(); // Print empty line
+
+        // Step 4: Choose model (only for Auto)
+        int modelKeuze = 0;
+        if (voertuigType == 1) {
+            modelKeuze = promptForValidInput(scanner,
+                    "Kies een model voor de auto:\n1. Business model\n2. Sport model (met alle extra's)", 1, 2);
+            System.out.println(); // Print empty line
+        }
+
+        // Step 5: Choose motor type with validation
+        int motorOptie = promptForValidInput(scanner,
+                "Kies een motor type:\n1. Benzine motor\n2. Diesel motor\n3. Waterstof motor\n4. Elektrisch motor", 1, 4);
+
+        System.out.println(); // Print empty line
+
+        // Step 6: Choose color
+        int kleurOptie = promptForValidInput(scanner,
+                "Kies een kleur:\n1. Rood\n2. Blauw\n3. Zwart", 1, 3);
+
+        System.out.println(); // Print empty line
+
+        // Step 7: Choose lock type
+        int slotOptie = promptForValidInput(scanner,
+                "Kies een slot type:\n1. Mechanisch slot\n2. Keyless slot\n3. Vingerafdruk slot", 1, 3);
+
+        System.out.println(); // Print empty line
+
+        // Step 8: Choose transmission type with validation
+        int versnellingsbakOptie = (motorOptie == 4) ? 2 : promptForValidInput(scanner,
+                "Kies een versnellingsbak type:\n1. Handgeschakeld\n2. Automaat", 1, 2);
+
+        System.out.println(); // Print empty line 
+
+        // Step 9: Configure the vehicle
+        Voertuig voertuig = dealer.getVoertuig(motorOptie, kleurOptie, slotOptie, versnellingsbakOptie);
+
+        // Add extras depending on the chosen model (only for Auto)
+        if (voertuigType == 1) {
+            if (modelKeuze == 2) { // Sport model: add all extras automatically
+                voertuig = new GPSDecorator(voertuig);
+                voertuig = new AlarmsysteemDecorator(voertuig);
+                voertuig = new ParkAssistDecorator(voertuig);
+                voertuig = new LederenBekledingDecorator(voertuig);
+                voertuig = new VerchroomdeVelgenDecorator(voertuig);
+                voertuig = new SpoilerDecorator(voertuig);
+
+                System.out.println("Sport model geselecteerd. Alle extra's zijn toegevoegd.");
+            } else if (modelKeuze == 1) { // Business model: let user select extras
+                System.out.println("Business model geselecteerd. Kies uw extra's:");
+
+                voertuig = promptForExtra(scanner, voertuig, "Wilt u GPS toevoegen? (ja/nee)", new GPSDecorator(voertuig));
+                voertuig = promptForExtra(scanner, voertuig, "Wilt u een alarmsysteem toevoegen? (ja/nee)",
+                        new AlarmsysteemDecorator(voertuig));
+                voertuig = promptForExtra(scanner, voertuig, "Wilt u park assist toevoegen? (ja/nee)",
+                        new ParkAssistDecorator(voertuig));
+                voertuig = promptForExtra(scanner, voertuig, "Wilt u lederen bekleding toevoegen? (ja/nee)",
+                        new LederenBekledingDecorator(voertuig));
+                voertuig = promptForExtra(scanner, voertuig, "Wilt u verchroomde velgen toevoegen? (ja/nee)",
+                        new VerchroomdeVelgenDecorator(voertuig));
+                voertuig = promptForExtra(scanner, voertuig, "Wilt u een spoiler toevoegen? (ja/nee)",
+                        new SpoilerDecorator(voertuig));
+            }
+        }
+        
+        // Step 10: Create an vehicle for a customer
+        Klant klant = new Klant(dealer);
+        
+        // Create an vehicle and print vehicle features and extras
+        klant.vraagVoertuigAan(motorOptie, kleurOptie, slotOptie, versnellingsbakOptie);
+        voertuig.printKenmerken();
+        System.out.println(); // Print empty line
+
+        // Ask the user if they want to start the motor
+        boolean motorGestart = false; // New boolean to track whether the motor is started
+
+        if (promptYesNo(scanner, "Wilt u de motor starten? (ja/nee)")){
+            System.out.println(); // Print empty line
+            voertuig.startMotor(); // Only show the motor type that is started
+            motorGestart = true; // Motor has been started
+
+            if (motorGestart) {
+                System.out.println(vehicleHandOffMessage); // "Auto gaat naar de detailhandelaar." or "Bestelbus gaat naar de detailhandelaar."
+                System.out.println(); // Print empty line
+
+            }
+            // Ask if the user wants to lock the vehicle
+            if (promptYesNo(scanner, "Wilt u het voertuig vergrendelen? (ja/nee)")) {
+                voertuig.lockVoertuig();
+            } else {
+                System.out.println("Het voertuig is niet vergrendeld en client is tevreden.");
+            }
+        } else {
+            System.out.println("De motor is niet gestart.");
+        }
+    }
+
+    // Hulpmethode om geldige invoer op te vragen
+    private static int promptForValidInput(Scanner scanner, String message, int minOption, int maxOption) {
+        int option = 0;
+        while (option < minOption || option > maxOption) {
+            try {
+                System.out.println(message);
+                option = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+                if (option < minOption || option > maxOption) {
+                    System.out
+                            .println("Ongeldige keuze. Kies alstublieft een optie tussen " + minOption + " en " + maxOption + ".");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Ongeldige invoer. Voer een geldig getal in.");
+                scanner.next(); // Consume incorrect input
+            }
+        }
+        return option;
+    }
+
+    // Hulpmethode om ja/nee vragen te stellen
+    private static boolean promptYesNo(Scanner scanner, String message) {
+        System.out.println(message);
+        String response = scanner.nextLine().trim().toLowerCase();
+        return response.equals("ja");
+    }
+
+    // Hulpmethode om extra's toe te voegen op basis van de keuze van de gebruiker
+    private static Voertuig promptForExtra(Scanner scanner, Voertuig voertuig, String message,
+                                           VoertuigDecorator decorator) {
+        if (promptYesNo(scanner, message)) {
+            return decorator;
+        }
+        return voertuig;
+    }
+}
